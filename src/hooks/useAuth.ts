@@ -28,7 +28,6 @@ export function useAuth() {
       }
     };
 
-    // Vérifier immédiatement
     checkAuth();
 
     // Vérifier toutes les 2 secondes
