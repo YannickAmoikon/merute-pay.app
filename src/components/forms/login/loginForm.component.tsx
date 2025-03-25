@@ -1,34 +1,84 @@
 "use client"
 
 import Image from "next/image";
-import { useRouter } from "next/navigation"
-import { cn } from "@/utils/utils";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState, useTransition } from "react";
-import { CircleDashed, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
-import { loginAction } from "@/app/actions/auth";
-import { Label } from "@/components/ui/label";
+import {useRouter} from "next/navigation"
+import {cn} from "@/utils/utils";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {useState, useTransition, useEffect} from "react";
+import {CircleDashed, Eye, EyeOff} from "lucide-react";
+import {toast} from "sonner";
+import {loginAction} from "@/app/actions/auth";
+import {Label} from "@/components/ui/label";
+import CryptoJS from "crypto-js";
 
-export function LoginForm({ 
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+// Générer des noms de paramètres aléatoires
+const generateRandomParamName = () => {
+  return `p${Math.random().toString(36).substring(2, 8)}`;
+};
+
+// Générer une nouvelle clé de chiffrement
+const generateEncryptionKey = () => {
+  return CryptoJS.lib.WordArray.random(16).toString();
+};
+
+export function LoginForm({
+                            className,
+                            ...props
+                          }: React.ComponentPropsWithoutRef<"div">) {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [encryptionKey, setEncryptionKey] = useState("");
 
-  async function onSubmit(formData: FormData) {
+  // Noms de paramètres aléatoires persistants pour cette session
+  const [paramNames, setParamNames] = useState({
+    userName: "",
+    password: "",
+    key: ""
+  });
+
+  // Générer une clé et des noms de paramètres au chargement du composant
+  useEffect(() => {
+    setEncryptionKey(generateEncryptionKey());
+    setParamNames({
+      userName: generateRandomParamName(),
+      password: generateRandomParamName(),
+      key: generateRandomParamName()
+    });
+  }, []);
+
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
+
+    // Récupérer les valeurs originales
+    const userName = formData.get("userName") as string;
+    const password = formData.get("password") as string;
+
+    // Créer un nouveau FormData avec les données chiffrées
+    const encryptedFormData = new FormData();
+
+    // Chiffrer les données sensibles
+    const encryptedUserName = CryptoJS.AES.encrypt(userName, encryptionKey).toString();
+    const encryptedPassword = CryptoJS.AES.encrypt(password, encryptionKey).toString();
+
+    // Ajouter les données chiffrées avec des noms génériques
+    encryptedFormData.append(paramNames.userName, encryptedUserName);
+    encryptedFormData.append(paramNames.password, encryptedPassword);
+    encryptedFormData.append(paramNames.key, encryptionKey);
+
     startTransition(async () => {
       try {
         const loadingToast = toast.loading("Connexion en cours...");
-        const result = await loginAction(formData);
-        
+        const result = await loginAction(encryptedFormData);
+
         if (result.success) {
           // Mettre à jour le cookie dans le state client
           document.cookie = `authToken=${result.token}; path=/; max-age=${60 * 60 * 24}; secure; samesite=strict`;
-          
+
           toast.dismiss(loadingToast);
           toast.success("Connexion réussie", {
             description: "Bienvenue sur Merute Pay !",
@@ -37,12 +87,12 @@ export function LoginForm({
 
           // Force le rafraîchissement du router et de l'état
           router.refresh();
-          
+
           // Attendre un court instant pour que le state soit mis à jour
           await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Redirection vers le dashboard
-          router.push("/admin/dashboard");
+
+          // Redirection vers le menu
+          router.push("/admin/main");
         } else {
           toast.dismiss(loadingToast);
           throw new Error(result.error);
@@ -79,7 +129,7 @@ export function LoginForm({
         </div>
       </div>
 
-      <form action={onSubmit} className="flex flex-col gap-4 md:gap-6">
+      <form onSubmit={onSubmit} className="flex flex-col gap-4 md:gap-6">
         <div className="space-y-2">
           <Label htmlFor="userName">Utilisateur</Label>
           <Input
@@ -88,6 +138,7 @@ export function LoginForm({
             placeholder="administrateur"
             className="h-9 md:h-10"
             required
+            autoComplete="off"
           />
         </div>
 
@@ -102,6 +153,7 @@ export function LoginForm({
               className="h-9 md:h-10"
               required
               minLength={4}
+              autoComplete="off"
             />
             <button
               type="button"
@@ -109,9 +161,9 @@ export function LoginForm({
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4" />
+                <EyeOff className="h-4 w-4"/>
               ) : (
-                <Eye className="h-4 w-4" />
+                <Eye className="h-4 w-4"/>
               )}
             </button>
           </div>
@@ -119,14 +171,15 @@ export function LoginForm({
 
         <Button type="submit" className="w-full h-9 md:h-10" disabled={isPending}>
           {isPending ? (
-            <CircleDashed className="animate-spin" />
+            <CircleDashed className="animate-spin"/>
           ) : (
             "Se connecter"
           )}
         </Button>
       </form>
 
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
+      <div
+        className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
         © {new Date().getFullYear()} MERUTE DIGITAL ORBITAL. Tous droits réservés
       </div>
     </div>

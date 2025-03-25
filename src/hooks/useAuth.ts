@@ -1,7 +1,7 @@
 "use client"
 
-import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import {useRouter} from 'next/navigation';
+import {useState, useEffect} from 'react';
 
 export function useAuth() {
   const router = useRouter();
@@ -16,8 +16,8 @@ export function useAuth() {
 
     // Vérifier si le token existe dans les cookies
     const checkAuth = async () => {
-      const hasAuthToken = document.cookie.includes('authToken=');
-      
+      const hasAuthToken = document.cookie.includes('authToken');
+
       if (isAuthenticated && !hasAuthToken) {
         // Si on était authentifié mais que le token a disparu
         setIsAuthenticated(false);
@@ -52,5 +52,5 @@ export function useAuth() {
     router.refresh();
   };
 
-  return { isAuthenticated, isLoading, logout };
+  return {isAuthenticated, isLoading, logout};
 } 

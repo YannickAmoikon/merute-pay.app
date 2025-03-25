@@ -3,6 +3,13 @@
 @tailwind utilities;
 
 
+.custom-success-toast {
+  background-color: #4CAF50; /* Vert */
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 
 @layer base {
   :root {
@@ -141,7 +148,11 @@
     --sidebar-ring: 217.2 91.2% 59.8%}
 }
 
-
+@layer base {
+  body {
+    @apply font-medium;
+  }
+}
 
 @layer base {
   * {

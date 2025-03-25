@@ -61,7 +61,7 @@ export default function DashboardLayout({children} : Readonly<{children : ReactN
         <div className="flex flex-1">
             <div className="flex flex-col h-screen w-full">
                 <Header/>
-                <main className="flex-1 p-6">
+                <main className="flex-1 overflow-y-auto">
                     {children}
                 </main>
             </div>

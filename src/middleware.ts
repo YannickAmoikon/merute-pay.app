@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
 
   // Cas 2: Token présent et on essaie d'accéder au login
   if (authToken && isLoginPage) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+    return NextResponse.redirect(new URL('/admin/main', request.url))
   }
 
   // Cas 3: Token présent et on est sur une route admin
